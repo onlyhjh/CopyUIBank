@@ -162,19 +162,7 @@ struct MainContainerScreen: View {
     }
 }
 
-struct CustomEnvironmentChildView: View {
-    @Environment (\.count) var count
-    
-    var body: some View {
-        VStack{
-            Text("\(count)")
-            Button("childview에서 add count (안됨)") {
-                 //count += 1
-            }
-        }
-        
-    }
-}
+
 
 extension MainContainerScreen {
     var nativeView: some View {
@@ -203,9 +191,18 @@ extension MainContainerScreen {
     }
 }
 
+class ChildViewModel:ObservableObject {
+    @Published var count = 0
+    
+    func incrementCounter() {
+            count += 1
+        //objectWillChange.send()
+    }
+}
 
 struct Home: View {
-    @State private var count = 30
+    @State var count = 0
+    @State var name = "haha"
     @State var alertVM = AppEnvironmentSingleton.shared.appEnvironment?.container.alertVM ?? AlertViewModel()
     
     var body: some View {
@@ -214,17 +211,27 @@ struct Home: View {
             
             VStack {
                 Text("home")
-                //CustomEnvironmentChildView() 기본값으로 설정됨
-                CustomEnvironmentChildView()
-                    .environment(\.count, count) // 자녀에게 값전달
+                // environment로 값 전달
+                ChildView1()
+                    .environment(\.count, count)
+                // binding으로 전달
+                ChildView2(count: $count)
                 Button("add count") {
                     count += 1
                 }
+                Text("")
+                
+                ChildView3(name: name)
+                Button("change counter name") {
+                    name = name == "hoho" ? "haha" : "hoho"
+                }
+                
                 Spacer()
                 Button("show/hide Alert") {
                     alertVM.isShow.toggle()
                 }
                 Spacer()
+                
             }
             .zIndex(200)
             .navigationDestination(for: Menu.self, destination: { menu in
@@ -251,9 +258,55 @@ struct OtherMenu: View {
             Text("OtherMenu")
         }
     }
-    
-    
 }
+
+
+struct ChildView1: View {
+    @Environment (\.count) var count
+    
+    var body: some View {
+        VStack{
+            Text("\(count)")
+            Button("ChildView1 add count (안됨)") {
+                 //count += 1
+            }
+        }
+        
+    }
+}
+
+struct ChildView2: View {
+    @Binding var count: Int
+    
+    var body: some View {
+        VStack{
+            Text("\(count)")
+            Button("ChildView2 add count") {
+                 count += 1
+            }
+        }
+        
+    }
+}
+
+struct ChildView3: View {
+    @StateObject var vm1 =  ChildViewModel()
+    @ObservedObject var vm2 =  ChildViewModel()
+    var name: String
+    
+    var body: some View {
+        VStack{
+            Text("StateObject \(name): \(vm1.count) > name이 변경되어도 값이 유지")
+            Text("ObservedObject \(name): \(vm2.count) > name이 변경되면 값이 초기화")
+            Button("ChildView3 add count") {
+                vm1.incrementCounter()
+                vm2.incrementCounter()
+            }
+        }
+        
+    }
+}
+
 // MARK: - Preview
 struct MainContainerScreen_Previews: PreviewProvider {
     static var previews: some View {

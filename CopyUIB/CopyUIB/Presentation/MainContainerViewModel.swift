@@ -25,6 +25,8 @@ enum AppLaunchState {
 class MainContainerViewModel: ObservableObject {
     
     private var useCase: MainContinerUseCaseProtocol = MainContinerUseCase()
+    private var count = 0
+    
     private let cancelBag = CancelBag()
     
     @Published var state: AppLaunchState = .launching
@@ -33,6 +35,11 @@ class MainContainerViewModel: ObservableObject {
         self.doLaunchInfoAsync()
     }
 
+    func incrementCounter() {
+        count += 1
+        objectWillChange.send()
+    }
+    
     func doLaunchInfoAsync() {
         useCase.getLaunchInfo()
             .sinkToResult { result in
